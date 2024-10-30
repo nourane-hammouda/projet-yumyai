@@ -4,9 +4,9 @@ USE Yumyai ;
 -- Création de la table Utilisateurs
 CREATE TABLE IF NOT EXISTS Utilisateurs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    mot_de_passe VARCHAR(255) NOT NULL,
+    Nom VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Mot De Passe VARCHAR(255) NOT NULL,
     date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
