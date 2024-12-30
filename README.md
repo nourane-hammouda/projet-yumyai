@@ -1,21 +1,27 @@
-from flask_bcrypt import Bcrypt
-from pymongo import MongoClient
-import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
-# Initialisation des outils
-bcrypt = Bcrypt()
+app = Flask(__name__)
 
-# Connexion à la base de données MongoDB
-client = MongoClient(os.getenv("MONGO_URI"))
-db = client["recette"]
-user_collection = db["users"]
+# Configuration de la base de données (utilisation de SQLite dans cet exemple)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///yumyai.db'  # SQLite
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Désactiver le suivi des modifications
 
-# Fonction pour créer un utilisateur
-def create_user(name, email, password):
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    user = {"name": name, "email": email, "password": hashed_password}
-    user_collection.insert_one(user)
+# Initialisation de SQLAlchemy avec Flask
+db = SQLAlchemy(app)
 
-# Fonction pour trouver un utilisateur par email
-def find_user_by_email(email):
-    return user_collection.find_one({"email": email})
+# Exemple d'une table utilisateur
+class Utilisateur(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    mot_de_passe = db.Column(db.String(200), nullable=False)
+
+    def __repr__(self):
+        return f'<Utilisateur {self.email}>'
+
+# Créer les tables dans la base de données (si elles n'existent pas)
+with app.app_context():
+    db.create_all()
+
+if __name__ == '__main__':
+    app.run(debug=True)
