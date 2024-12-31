@@ -1,0 +1,49 @@
+import sqlite3
+
+# Connexion à la base de données (elle sera créée si elle n'existe pas)
+conn = sqlite3.connect('recettes.db')
+cur = conn.cursor()
+
+# Création de la table pour les recettes
+cur.execute('''
+CREATE TABLE IF NOT EXISTS recettes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom TEXT NOT NULL,
+    ingredients TEXT NOT NULL,
+    temps_preparation INTEGER,
+    niveau_difficulte TEXT,
+    image TEXT
+)
+''')
+
+# Insertion d'exemples de recettes dans la base de données
+recettes = [
+    ("Salade de tomates", "Tomates, huile d'olive, sel, poivre", 10, "Facile", "image_salade.jpg"),
+    ("Poulet rôti", "Poulet, ail, herbes de Provence, huile d'olive", 90, "Moyenne", "image_poulet.jpg"),
+    ("Tarte aux pommes", "Pâte brisée, pommes, sucre, beurre", 60, "Moyenne", "image_tarte_pommes.jpg"),
+    ("Spaghetti à la bolognaise", "Spaghetti, viande hachée, tomates, oignon, ail, herbes", 40, "Facile", "image_spaghetti.jpg"),
+    ("Soupe de légumes", "Carottes, poireaux, pommes de terre, bouillon", 30, "Facile", "image_soupe.jpg")
+]
+
+# Insertion des recettes dans la table
+cur.executemany('''
+INSERT INTO recettes (nom, ingredients, temps_preparation, niveau_difficulte, image)
+VALUES (?, ?, ?, ?, ?)
+''', recettes)
+
+# Commit et fermeture de la connexion
+conn.commit()
+
+# Fonction pour récupérer toutes les recettes
+def afficher_recettes():
+    cur.execute("SELECT * FROM recettes")
+    recettes = cur.fetchall()
+    for recette in recettes:
+        print(f"Nom: {recette[1]}, Ingrédients: {recette[2]}, Temps de préparation: {recette[3]} minutes, "
+              f"Niveau de difficulté: {recette[4]}, Image: {recette[5]}")
+
+# Affichage des recettes
+afficher_recettes()
+
+# Fermeture de la connexion
+conn.close()
