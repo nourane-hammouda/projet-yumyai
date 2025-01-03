@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YUMYAI</title>
-    <link rel="stylesheet" href="styles.css">
+    <!-- Lien vers le fichier CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        /* Styles pour le fond de page */
+        /* Styles intégrés */
         body {
             display: flex;
             justify-content: center;
@@ -14,19 +15,18 @@
             height: 100vh;
             margin: 0;
             font-family: 'Garamond', serif;
-            background-image: url('chemin/de-votre-image.jpg'); /* Remplacez avec le chemin de votre image */
-            background-size: cover; /* L'image prend toute la largeur de l'écran */
-            background-position: center; /* Centre l'image */
-            background-repeat: no-repeat; /* Empêche la répétition de l'image */
+           /* background-image: url('{{ url_for('static', filename='images/background.jpg') }}');*/
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Styles pour le conteneur principal */
         .container {
             width: 90%;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: rgba(249, 249, 249, 0.8); /* Fond semi-transparent */
+            background-color: rgba(249, 249, 249, 0.8);
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
@@ -42,7 +42,6 @@
             margin: 0;
         }
 
-        /* Styles pour le conteneur des boutons */
         .button-container {
             display: flex;
             gap: 20px;
@@ -50,7 +49,6 @@
             justify-content: center;
         }
 
-        /* Style pour les boutons */
         a.button {
             padding: 15px 30px;
             font-size: 1.2em;
@@ -70,17 +68,11 @@
 <body>
     <div class="container">
         <h1>YUMYAI</h1>
-        
-        <!-- Conteneur pour les boutons -->
         <div class="button-container">
-            <a href="inscription.html" class="button">S'inscrire</a>
-            <a href="connexion.html" class="button">Se connecter</a>
+            <!-- Utilisation correcte de `url_for` pour les liens -->
+            <a href="{{ url_for('inscription') }}" class="button">S'inscrire</a>
+            <a href="{{ url_for('connexion') }}" class="button">Se connecter</a>
         </div>
     </div>
-
-    <script src="scripts.js"></script>
 </body>
 </html>
-
-
-
