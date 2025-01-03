@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choisir vos ingrédients</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Choisissez vos ingrédients</h1>
+            <a href="{{ url_for('accueil') }}">Retour à l'accueil</a>
+        </header>
+
+        <form action="{{ url_for('generer_recettes') }}" method="get">
+            <label for="ingredients">Entrez les ingrédients disponibles (séparés par des virgules) :</label>
+            <input type="text" id="ingredients" name="ingredients" required>
+            <button type="submit">Générer des recettes</button>
+        </form>
+
+        {% if recettes %}
+        <div class="recettes-container">
+            <h2>Recettes suggérées pour vos ingrédients :</h2>
+            <ul class="recettes-list">
+                {% for recette in recettes %}
+                <li class="recette-item">
+                    <h3>{{ recette.nom }}</h3>
+                    <div class="recette-details">
+                        <img src="https://spoonacular.com/recipeImages/{{ recette.id }}-312x231.jpg" alt="{{ recette.nom }}">
+                        <div class="recette-info">
+                            <p><strong>Ingrédients :</strong> {{ recette.ingredients }}</p>
+                            <a href="https://spoonacular.com/recipes/{{ recette.id }}" target="_blank" class="recipe-link">Voir la recette complète</a>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>© 2025 Cuisine App. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>

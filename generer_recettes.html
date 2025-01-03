@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recettes Générées</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Recettes Générées</h1>
+            <a href="{{ url_for('accueil') }}">Retour à l'accueil</a>
+        </header>
+
+        {% if recettes %}
+        <div class="recettes-container">
+            <h2>Recettes suggérées pour vos ingrédients :</h2>
+            <ul class="recettes-list">
+                {% for recette in recettes %}
+                <li class="recette-item">
+                    <h3>{{ recette.title }}</h3>
+                    <div class="recette-details">
+                        <img src="{{ recette.image }}" alt="{{ recette.title }}">
+                        <div class="recette-info">
+                            <p><strong>Ingrédients :</strong> 
+                                {% for ingredient in recette.usedIngredients %}
+                                    {{ ingredient.name }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </p>
+                            <a href="https://spoonacular.com/recipes/{{ recette.id }}" target="_blank" class="recipe-link">Voir la recette complète</a>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <p>Aucune recette trouvée.</p>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>© 2025 Cuisine App. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>
