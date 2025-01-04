@@ -137,12 +137,24 @@ def ingredients():
 @login_required
 def generer_recettes():
     try:
-        data = request.args.get('ingredients')  # Utilisation de request.args pour GET
-        if not data:
+        ingredients = request.args.get('ingredients')  # Récupérer les ingrédients depuis la requête GET
+        if not ingredients:
             return jsonify({"message": "Aucun ingrédient fourni.", "recettes": []}), 400
 
-        recettes = obtenir_recettes_ingredients(data)
-        return jsonify({"recettes": recettes}), 200
+        # Nettoyer les ingrédients (enlever les espaces inutiles et les séparer par des virgules)
+        ingredients = [ingredient.strip() for ingredient in ingredients.split(',') if ingredient.strip()]
+        ingredients = ','.join(ingredients)
+
+        if not ingredients:
+            return jsonify({"message": "Veuillez fournir des ingrédients valides.", "recettes": []}), 400
+
+        recettes = obtenir_recettes_ingredients(ingredients)
+
+        if recettes:  # Si des recettes sont trouvées
+            return render_template('generer_recettes.html', recettes=recettes)
+        else:  # Si aucune recette n'est trouvée
+            return render_template('generer_recettes.html', message="Aucune recette trouvée pour ces ingrédients. Essayez avec d'autres ingrédients.")
+
     except Exception as e:
         return jsonify({"message": f"Erreur serveur: {str(e)}"}), 500
 
@@ -163,13 +175,34 @@ def obtenir_recettes_ingredients(ingredients, max_recipes=5):
         "ranking": 1
     }
 
+    print(f"Appel API avec les paramètres : {params}")
+
     try:
         response = requests.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+
+        # Vérification de la réponse
+        if response.status_code != 200:
+            print(f"Erreur API : {response.status_code}, {response.text}")  # Afficher les erreurs de l'API
+            return []
+        
+        print(f"Réponse de l'API : {response.text}")  # Affiche la réponse brute sous forme de texte
+        
+        # Vérifier la réponse de l'API
+        recettes = response.json()
+        print(f"Réponse API : {recettes}")  # Afficher la réponse JSON
+
+        # Si la réponse est vide, retourner une liste vide
+        if not recettes:
+            print("Aucune recette trouvée pour ces ingrédients.")
+            return []
+
+        return recettes
+
     except requests.exceptions.RequestException as e:
         print(f"Erreur lors de l'appel à l'API Spoonacular : {e}")
         return []
+
+
 
 if __name__ == '__main__':
     with app.app_context():
