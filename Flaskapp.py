@@ -7,9 +7,11 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 import requests
-
-load_dotenv()  # Charge les variables d'environnement depuis .env
+# Chemin absolu vers votre fichier .env (modifiez ce chemin si nécessaire)
+dotenv_path = os.path.join(os.path.dirname(__file__), 'api.env')
+load_dotenv(dotenv_path)
 SPOONACULAR_API_KEY = os.getenv('SPOONACULAR_API_KEY')  # Récupère la clé API
+print("Clé API:", SPOONACULAR_API_KEY)
 
 # CONFIGURATION DE L'APPLICATION FLASK
 app = Flask(__name__)
@@ -129,42 +131,52 @@ def questionnaire():
 
     return render_template('questionnaire.html')
 
-@app.route('/ingredients')
+@app.route('/ingredients', methods=['GET', 'POST'])
+@login_required
 def ingredients():
+    if request.method == 'POST':
+        ingredients = request.form.get('ingredients')
+        return redirect(url_for('generer_recettes', ingredients=ingredients))
     return render_template('ingredients.html')
 
-@app.route('/generer_recettes', methods=['GET'])
+@app.route('/generer_recettes')
 @login_required
 def generer_recettes():
-    try:
-        ingredients = request.args.get('ingredients')  # Récupérer les ingrédients depuis la requête GET
-        if not ingredients:
-            return jsonify({"message": "Aucun ingrédient fourni.", "recettes": []}), 400
+    ingredients = request.args.get('ingredients')
+    if not ingredients:
+        return "Aucun ingrédient fourni.", 400
 
-        # Nettoyer les ingrédients (enlever les espaces inutiles et les séparer par des virgules)
-        ingredients = [ingredient.strip() for ingredient in ingredients.split(',') if ingredient.strip()]
-        ingredients = ','.join(ingredients)
+    recettes = obtenir_recettes_ingredients(ingredients)
+    if not recettes:
+        message = "Aucune recette trouvée pour ces ingrédients. Essayez d'autres combinaisons."
+        return render_template('generer_recettes.html', recettes=[], message=message, ingredients=ingredients)
 
-        if not ingredients:
-            return jsonify({"message": "Veuillez fournir des ingrédients valides.", "recettes": []}), 400
-
-        recettes = obtenir_recettes_ingredients(ingredients)
-
-        if recettes:  # Si des recettes sont trouvées
-            return render_template('generer_recettes.html', recettes=recettes)
-        else:  # Si aucune recette n'est trouvée
-            return render_template('generer_recettes.html', message="Aucune recette trouvée pour ces ingrédients. Essayez avec d'autres ingrédients.")
-
-    except Exception as e:
-        return jsonify({"message": f"Erreur serveur: {str(e)}"}), 500
-
-
+    return render_template('generer_recettes.html', recettes=recettes, ingredients=ingredients)
 
 @app.route('/deconnexion')
-#@login_required
 def deconnexion():
     logout_user()
     return redirect(url_for('accueil'))
+
+@app.route('/test_api')
+def test_api():
+    ingredients = request.args.get('ingredients', 'tomato,chicken,rice')
+    url = "https://api.spoonacular.com/recipes/findByIngredients"
+    params = {
+        "apiKey": SPOONACULAR_API_KEY,
+        "ingredients": ingredients,
+        "number": 5,
+        "ranking": 1
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        recettes = response.json()
+        return jsonify(recettes)  # Retourne les recettes au format JSON
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)})
+
 
 def obtenir_recettes_ingredients(ingredients, max_recipes=5):
     url = "https://api.spoonacular.com/recipes/findByIngredients"
@@ -172,37 +184,24 @@ def obtenir_recettes_ingredients(ingredients, max_recipes=5):
         "apiKey": SPOONACULAR_API_KEY,
         "ingredients": ingredients,
         "number": max_recipes,
-        "ranking": 1
+        "ranking": 1,
+        "language": "fr"  # Demande des résultats en français
     }
-
-    print(f"Appel API avec les paramètres : {params}")
 
     try:
         response = requests.get(url, params=params)
-
-        # Vérification de la réponse
-        if response.status_code != 200:
-            print(f"Erreur API : {response.status_code}, {response.text}")  # Afficher les erreurs de l'API
-            return []
-        
-        print(f"Réponse de l'API : {response.text}")  # Affiche la réponse brute sous forme de texte
-        
-        # Vérifier la réponse de l'API
+        response.raise_for_status()
         recettes = response.json()
-        print(f"Réponse API : {recettes}")  # Afficher la réponse JSON
-
-        # Si la réponse est vide, retourner une liste vide
-        if not recettes:
-            print("Aucune recette trouvée pour ces ingrédients.")
-            return []
-
-        return recettes
-
+        return [
+            {
+                "title": recette["title"],
+                "image": recette["image"],
+                "sourceUrl": f"https://spoonacular.com/recipes/{recette['title'].replace(' ', '-')}-{recette['id']}"
+            } for recette in recettes
+        ]
     except requests.exceptions.RequestException as e:
         print(f"Erreur lors de l'appel à l'API Spoonacular : {e}")
         return []
-
-
 
 if __name__ == '__main__':
     with app.app_context():
