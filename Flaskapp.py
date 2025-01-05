@@ -7,21 +7,26 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 import requests
-# Chemin absolu vers votre fichier .env (modifiez ce chemin si nécessaire)
-dotenv_path = os.path.join(os.path.dirname(__file__), 'api.env')
+from googletrans import Translator
+
+# Initialiser Google Translator
+translator = Translator()
+
+# Charger les variables d'environnement
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-SPOONACULAR_API_KEY = os.getenv('SPOONACULAR_API_KEY')  # Récupère la clé API
-print("Clé API:", SPOONACULAR_API_KEY)
+SPOONACULAR_API_KEY = os.getenv('SPOONACULAR_API_KEY')
 
 # CONFIGURATION DE L'APPLICATION FLASK
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'  # Clé secrète pour Flask
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cuisine_app.db'  # Base de données SQLite
+app.config['SECRET_KEY'] = 'secret!'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cuisine_app.db'
 db = SQLAlchemy(app)
 
 # Initialisation de LoginManager
 login_manager = LoginManager(app)
-login_manager.login_view = 'connexion'  # Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+login_manager.login_view = 'connexion'
 
 # MODELE DE L'UTILISATEUR
 class Utilisateur(UserMixin, db.Model):
@@ -49,12 +54,9 @@ class Recette(db.Model):
     def __repr__(self):
         return f"<Recette {self.nom}>"
 
-# Fonction pour charger un utilisateur à partir de son ID
 @login_manager.user_loader
 def load_user(user_id):
     return Utilisateur.query.get(int(user_id))
-
-# ROUTES DE L'APPLICATION
 
 @app.route('/')
 def accueil():
@@ -173,19 +175,20 @@ def test_api():
         response = requests.get(url, params=params)
         response.raise_for_status()
         recettes = response.json()
-        return jsonify(recettes)  # Retourne les recettes au format JSON
+        return jsonify(recettes)
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)})
 
-
 def obtenir_recettes_ingredients(ingredients, max_recipes=5):
+    # Traduire les ingrédients en anglais
+    translated_ingredients = translator.translate(ingredients, src="fr", dest="en").text
+
     url = "https://api.spoonacular.com/recipes/findByIngredients"
     params = {
         "apiKey": SPOONACULAR_API_KEY,
-        "ingredients": ingredients,
+        "ingredients": translated_ingredients,
         "number": max_recipes,
-        "ranking": 1,
-        "language": "fr"  # Demande des résultats en français
+        "ranking": 1
     }
 
     try:
@@ -194,7 +197,7 @@ def obtenir_recettes_ingredients(ingredients, max_recipes=5):
         recettes = response.json()
         return [
             {
-                "title": recette["title"],
+                "title": translator.translate(recette["title"], src="en", dest="fr").text,
                 "image": recette["image"],
                 "sourceUrl": f"https://spoonacular.com/recipes/{recette['title'].replace(' ', '-')}-{recette['id']}"
             } for recette in recettes
